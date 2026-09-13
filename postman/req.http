@@ -1,0 +1,36 @@
+POST : http://localhost:3000/books
+{
+  "title": "Test",
+  "author": "Eman Arroub",
+  "totalCopies": 1,
+  "availableCopies": 1
+}
+
+POST : http://localhost:3000/members
+{
+    "name" : "eman",
+    "email" : "eman@test.com",
+    "role" : "member"
+}
+
+POST : http://localhost:3000/borrow
+{
+    "memberId" : 1,
+    "bookId":1
+}
+
+PATCH : http://localhost:3000/borrow/1/return
+
+PUT : http://localhost:3000/books/1
+{
+        "totalCopies": 5,
+        "availableCopies": 5
+}
+
+DELETE : http://localhost:3000/books/1
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, UseFilters, UsePipes } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, UseFilters, UsePipes, Patch } from '@nestjs/common';
 import { BorrowService } from './borrow.service.js';
 import { CreateBorrowDto } from './dto/create-borrow.dto.js';
 import { ReturnBorrowDto } from './dto/return-borrow.dto.js';
@@ -28,9 +28,9 @@ export class BorrowController {
     return this.borrowService.borrowBook(dto);
   }
 
-  @Post(':id/return')
+  @Patch(':id/return')
   @Roles('member')
-  returnBook(@Param('id') id: number, @Body() dto: ReturnBorrowDto) {
-    return this.borrowService.returnBook(id, dto);
+  returnBook(@Param('id') id: number) {
+    return this.borrowService.returnBook(id);
   }
 }

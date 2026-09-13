@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Book } from './book.entity.js';
 import { CreateBookDto } from './dto/create-book.dto.js';
 import {UpdateBookDto} from './dto/update-book.dto.js'
@@ -22,13 +22,23 @@ export class BooksService {
         return book;
     }
 
-    updateBook(id : number , dto : UpdateBookDto){
-        const index = this.books.findIndex( b => b.id === id)
-        if (index === -1) return {message : 'Book not found'}
-        this.books[index] = {...this.books[index], ...dto};
-        return this.books[index]
-    }
+updateBook(id: number, dto: UpdateBookDto) {
+  const book = this.books.find(b => b.id === id);
+  if (!book) throw new NotFoundException('Book not found');
 
+  Object.assign(book, dto);
+
+  if (dto.totalCopies !== undefined) {
+    const borrowedCount = book.totalCopies - book.availableCopies;
+    book.availableCopies = dto.totalCopies - borrowedCount;
+
+    if (book.availableCopies < 0) {
+      book.availableCopies = 0;
+    }
+  }
+
+  return book;
+}
     deleteBook(id:number){
         const index = this.books.findIndex(b => b.id === id)
         if (index === -1) return { message : 'Book not found'}

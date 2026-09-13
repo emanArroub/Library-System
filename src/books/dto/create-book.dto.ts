@@ -1,4 +1,4 @@
-import { IsString, IsInt } from 'class-validator';
+import { IsString, IsInt ,Min } from 'class-validator';
 
 export class CreateBookDto {
   @IsString()
@@ -9,4 +9,8 @@ export class CreateBookDto {
 
   @IsInt()
   totalCopies: number;
+
+  @IsInt()
+  @Min(0)
+  availableCopies : number
 }
