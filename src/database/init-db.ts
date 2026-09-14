@@ -3,16 +3,19 @@ import Database from 'better-sqlite3';
 export function initDatabase() {
   const db = new Database('library.db');
 
-  db.prepare(`
+  db.prepare(
+    `
     CREATE TABLE IF NOT EXISTS members (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       role TEXT NOT NULL CHECK (role IN ('member', 'librarian'))
     );
-  `).run();
+  `,
+  ).run();
 
-  db.prepare(`
+  db.prepare(
+    `
     CREATE TABLE IF NOT EXISTS books (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -20,9 +23,11 @@ export function initDatabase() {
       totalCopies INTEGER NOT NULL,
       availableCopies INTEGER NOT NULL
     );
- ` ).run();
+ `,
+  ).run();
 
-  db.prepare(`
+  db.prepare(
+    `
     CREATE TABLE IF NOT EXISTS borrow (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       memberId INTEGER NOT NULL,
@@ -34,6 +39,6 @@ export function initDatabase() {
       FOREIGN KEY (memberId) REFERENCES members(id),
       FOREIGN KEY (bookId) REFERENCES books(id)
     );
-  `).run();
-
+  `,
+  ).run();
 }

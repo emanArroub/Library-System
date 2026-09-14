@@ -1,6 +1,3 @@
-import {IsDateString} from 'class-validator'
+import { IsDateString } from 'class-validator';
 
-
-export class ReturnBorrowDto {
-    
-}
+export class ReturnBorrowDto {}

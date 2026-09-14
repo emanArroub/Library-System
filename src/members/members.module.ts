@@ -5,6 +5,6 @@ import { MembersService } from './members.service.js';
 @Module({
   controllers: [MembersController],
   providers: [MembersService],
-  exports: [MembersService]
+  exports: [MembersService],
 })
 export class MembersModule {}

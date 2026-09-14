@@ -6,15 +6,14 @@ import { MembersModule } from './members/members.module.js';
 import { BorrowModule } from './borrow/borrow.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { LoggerMiddleware } from './common/middleware/logger.middleware.js';
-import { AuthMiddleware } from './common/middleware/auth.middleware.js';
 
 @Module({
   imports: [BooksModule, MembersModule, BorrowModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule  implements NestModule{
+export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware,LoggerMiddleware).forRoutes('*');
+    consumer.apply(LoggerMiddleware).forRoutes('*');
   }
 }

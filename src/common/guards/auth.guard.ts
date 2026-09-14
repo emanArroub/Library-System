@@ -1,18 +1,31 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { MembersService } from '../../members/members.service.js';
+import { Member } from '../../members/member.entity.js';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const token = request.headers['x-auth-token'];
+  constructor(private readonly membersService: MembersService) {}
 
-    if (!token) {
-      return false;
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+
+    // جلب الـ memberId من الـ request (مثلاً من الـ body أو من الـ token لاحقًا)
+    const memberId = Number(request.headers['x-member-id']);
+    const member = this.membersService
+      .getAllMembers()
+      .find((m) => m.id === memberId);
+
+    if (!member) {
+      throw new ForbiddenException('Invalid member ID');
     }
 
+    request.user = member; // أهم سطر
     return true;
   }
 }

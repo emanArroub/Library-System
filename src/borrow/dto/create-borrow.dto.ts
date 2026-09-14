@@ -1,8 +1,9 @@
-import {IsInt , IsDateString} from 'class-validator'
+import { IsInt } from 'class-validator';
 
 export class CreateBorrowDto {
-    @IsInt()
-    memberId : number;
-    @IsInt()
-    bookId : number;
+  @IsInt()
+  bookId: number;
+
+  @IsInt()
+  memberId: number;
 }
