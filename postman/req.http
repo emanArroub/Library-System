@@ -9,7 +9,6 @@ POST : http://localhost:3000/members
 {
     "name" : "eman",
     "email" : "eman@test.com",
-    "role" : "member"
 }
 
 POST : http://localhost:3000/borrow
@@ -23,6 +22,11 @@ PATCH : http://localhost:3000/borrow/1/return
 PUT : http://localhost:3000/books|members/1
 
 DELETE : http://localhost:3000/books|members/1
+
+PATCH : http://localhost:3000/members/2/role
+{
+    "role": "librarian"
+}
 
 
 

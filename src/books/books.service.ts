@@ -8,6 +8,10 @@ export class BooksService {
   private books: Book[] = [];
   private nextId = 1;
 
+  getBookById(id: number) {
+   return this.books.find(b => b.id === id);
+}
+
   getAllBooks() {
     return this.books;
   }

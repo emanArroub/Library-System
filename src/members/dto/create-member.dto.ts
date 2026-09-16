@@ -7,6 +7,4 @@ export class CreateMemberDto {
   @IsEmail()
   email: string;
 
-  @IsIn(['member', 'librarian'])
-  role: 'member' | 'librarian';
 }

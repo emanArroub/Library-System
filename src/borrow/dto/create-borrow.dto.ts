@@ -4,6 +4,4 @@ export class CreateBorrowDto {
   @IsInt()
   bookId: number;
 
-  @IsInt()
-  memberId: number;
 }

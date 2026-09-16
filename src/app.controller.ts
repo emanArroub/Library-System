@@ -1,10 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
-import { CurrentRole } from './common/decorators/current-role.decorator.js';
+import { CurrentUser } from './common/decorators/current-role.decorator.js';
 
 @Controller()
 export class AppController {
   @Get('check-role')
-  checkRole(@CurrentRole() role: string) {
+  checkRole(@CurrentUser() role: string) {
     return { role };
   }
 }

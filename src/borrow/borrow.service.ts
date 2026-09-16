@@ -1,17 +1,16 @@
 import {
-  BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
+  BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
-import { Borrow } from './borrow.entity.js';
-import { CreateBorrowDto } from './dto/create-borrow.dto.js';
+import { Borrow } from '../common/interfaces/borrow.interface.js';
 import { BooksService } from '../books/books.service.js';
 import { MembersService } from '../members/members.service.js';
 
 @Injectable()
 export class BorrowService {
-  private borrows: Borrow[] = [];
+  private borrowed: Borrow[] = [];
   private nextId = 1;
 
   constructor(
@@ -19,68 +18,44 @@ export class BorrowService {
     private readonly membersService: MembersService,
   ) {}
 
-  getAllBorrows() {
-    return this.borrows;
-  }
-
-  borrowBook(dto: CreateBorrowDto) {
-    const member = this.membersService
-      .getAllMembers()
-      .find((m) => m.id === dto.memberId);
-
+  borrowBook(memberId: number, bookId: number) {
+    const member = this.membersService.getMemberById(memberId);
     if (!member) throw new NotFoundException('Member not found');
 
-    const book = this.booksService
-      .getAllBooks()
-      .find((b) => b.id === dto.bookId);
-
+    const book = this.booksService.getBookById(bookId);
     if (!book) throw new NotFoundException('Book not found');
 
-    if (book.availableCopies <= 0) {
+    if (book.availableCopies <= 0)
       throw new BadRequestException('No available copies');
-    }
 
     book.availableCopies -= 1;
 
-    const borrowDate = new Date();
-    const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
     const borrow: Borrow = {
       id: this.nextId++,
-      memberId: dto.memberId,
-      bookId: dto.bookId,
-      borrowDate,
-      dueDate,
+      memberId,
+      bookId,
+      borrowDate: new Date(),
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      returned: false,
     };
 
-    this.borrows.push(borrow);
+    this.borrowed.push(borrow);
     return borrow;
   }
 
-  returnBook(id: number) {
-    const borrow = this.borrows.find((b) => b.id === id);
-    if (!borrow) throw new NotFoundException('Borrow record not found');
+  returnBook(memberId: number, borrowId: number) {
+    const borrow = this.borrowed.find((b) => b.id === borrowId);
 
-    if (borrow.returnDate) {
-      throw new BadRequestException('Book already returned');
-    }
+    if (!borrow) throw new NotFoundException('Borrow not found');
 
-    borrow.returnDate = new Date();
+    if (borrow.memberId !== memberId)
+      throw new ForbiddenException('This borrow does not belong to you');
 
-    const book = this.booksService
-      .getAllBooks()
-      .find((b) => b.id === borrow.bookId);
+    borrow.returned = true;
 
-    if (book) {
-      book.availableCopies += 1;
-    }
-
-    const diffDays = Math.floor(
-      (borrow.returnDate.getTime() - borrow.dueDate.getTime()) /
-        (1000 * 60 * 60 * 24),
-    );
-
-    borrow.fine = diffDays > 0 ? diffDays * 100 : 0;
+    const book = this.booksService.getBookById(borrow.bookId);
+    if (!book) throw new NotFoundException('Book not found');
+    book.availableCopies += 1;
 
     return borrow;
   }
