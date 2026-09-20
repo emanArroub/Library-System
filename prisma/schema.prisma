@@ -1,0 +1,40 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+model Borrow {
+  id          Int      @id @default(autoincrement())
+  memberId    Int
+  bookId      Int
+  borrowDate  DateTime @default(now())
+  dueDate     DateTime
+  returnDate  DateTime?
+  returned    Boolean  @default(false)
+  fine        Int      @default(0)
+
+  member      Member   @relation(fields: [memberId], references: [id])
+  book        Book     @relation(fields: [bookId], references: [id])
+}
+
+model Member {
+  id       Int      @id @default(autoincrement())
+  name     String
+  email    String   @unique
+  role     String   @default("member")
+  borrows  Borrow[]
+}
+
+model Book {
+  id              Int      @id @default(autoincrement())
+  title           String
+  author          String
+  totalCopies     Int
+  availableCopies Int
+  borrows         Borrow[]
+}

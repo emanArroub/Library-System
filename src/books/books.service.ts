@@ -1,57 +1,68 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Book } from './book.entity.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateBookDto } from './dto/create-book.dto.js';
 import { UpdateBookDto } from './dto/update-book.dto.js';
 
 @Injectable()
 export class BooksService {
-  private books: Book[] = [];
-  private nextId = 1;
+  constructor(private prisma: PrismaService) {}
 
-  getBookById(id: number) {
-   return this.books.find(b => b.id === id);
-}
+  async getBookById(id: number) {
+    const book = await this.prisma.book.findUnique({
+      where: { id },
+    });
 
-  getAllBooks() {
-    return this.books;
-  }
-
-  addBook(dto: CreateBookDto) {
-    const book: Book = {
-      id: this.nextId++,
-      title: dto.title,
-      author: dto.author,
-      totalCopies: dto.totalCopies,
-      availableCopies: dto.totalCopies,
-    };
-    this.books.push(book);
+    if (!book) throw new NotFoundException('Book not found');
     return book;
   }
 
-  updateBook(id: number, dto: UpdateBookDto) {
-    const book = this.books.find((b) => b.id === id);
+  async getAllBooks() {
+    return await this.prisma.book.findMany();
+  }
+
+  async addBook(dto: CreateBookDto) {
+    return await this.prisma.book.create({
+      data: {
+        title: dto.title,
+        author: dto.author,
+        totalCopies: dto.totalCopies,
+        availableCopies: dto.totalCopies,
+      },
+    });
+  }
+
+  async updateBook(id: number, dto: UpdateBookDto) {
+    const book = await this.prisma.book.findUnique({
+      where: { id },
+    });
+
     if (!book) throw new NotFoundException('Book not found');
 
     const borrowedCount = book.totalCopies - book.availableCopies;
 
-    Object.assign(book, dto);
+    const updated = await this.prisma.book.update({
+      where: { id },
+      data: {
+        title: dto.title ?? book.title,
+        author: dto.author ?? book.author,
+        totalCopies: dto.totalCopies ?? book.totalCopies,
+        availableCopies:
+          dto.totalCopies !== undefined
+            ? Math.max(dto.totalCopies - borrowedCount, 0)
+            : book.availableCopies,
+      },
+    });
 
-    if (dto.totalCopies !== undefined) {
-      book.availableCopies = dto.totalCopies - borrowedCount;
-
-      if (book.availableCopies < 0) {
-        book.availableCopies = 0;
-      }
-    }
-
-    return book;
+    return updated;
   }
 
-  deleteBook(id: number) {
-    const index = this.books.findIndex((b) => b.id === id);
-    if (index === -1) throw new NotFoundException('Book not found');
-    const deleted = this.books[index];
-    this.books.splice(index, 1);
-    return deleted;
+  async deleteBook(id: number) {
+    try {
+      return await this.prisma.book.delete({
+        where: { id },
+      });
+    } catch {
+      throw new NotFoundException('Book not found');
+    }
   }
 }

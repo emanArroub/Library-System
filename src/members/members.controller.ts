@@ -6,39 +6,45 @@ import { Roles } from '../common/decorators/roles.decorator.js';
 import { AuthGuard} from '../common/guards/auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 
+@UseGuards(AuthGuard)
 @Controller('members')
 export class MembersController {
-  constructor(private readonly membersService: MembersService) {}
+  constructor(private readonly membersService: MembersService) {}
 
-  @Get()
-  getAllMembers() {
-    return this.membersService.getAllMembers();
-  }
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('librarian')
+  @Get()
+  getAllMembers() {
+    return this.membersService.getAllMembers();
+  }
 
-  @Post()
-  addMember(@Body() dto: CreateMemberDto) {
-    return this.membersService.addMember(dto);
-  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('librarian')
+  @Post()
+  addMember(@Body() dto: CreateMemberDto) {
+    return this.membersService.addMember(dto);
+  }
 
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('librarian')
 @Patch(':id')
 updateMember(@Param('id') id: number, @Body() dto: UpdateMemberDto) {
-  return this.membersService.updateMember(id, dto);
+  return this.membersService.updateMember(id, dto);
 }
 
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('librarian')
 @Delete(':id')
 deleteMember(@Param('id') id: number) {
-  return this.membersService.deleteMember(id);
+  return this.membersService.deleteMember(id);
 }
 
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('librarian')
 @Patch(':id/role')
 updateRole(@Param('id') id: number, @Body('role') role: 'member' | 'librarian') {
-  return this.membersService.updateRole(id, role);
+  return this.membersService.updateRole(id, role);
 }
 
 }

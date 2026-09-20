@@ -6,9 +6,10 @@ import { MembersModule } from './members/members.module.js';
 import { BorrowModule } from './borrow/borrow.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { LoggerMiddleware } from './common/middleware/logger.middleware.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
-  imports: [BooksModule, MembersModule, BorrowModule, AuthModule],
+  imports: [BooksModule, MembersModule, BorrowModule, AuthModule, PrismaModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,63 +1,72 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Member } from './member.entity.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateMemberDto } from './dto/create-member.dto.js';
 import { UpdateMemberDto } from './dto/update-member.dto.js';
+import { PrismaModule } from '../prisma/prisma.module.js';
 
 @Injectable()
 export class MembersService {
-  private members: Member[] = [
-      {
-        id : 1,
-        name: "Admin",
-        email: "admin@example.com",
-        role : 'librarian'
-},
-    
-  ];
-  private nextId = 2;
+  constructor(private prisma: PrismaService) {}
 
-  getMemberById(id: number) {
-    return this.members.find(m => m.id === id);
-}
+  async getMemberById(id: number) {
+    const member = await this.prisma.member.findUnique({
+      where: { id },
+    });
 
-  getAllMembers() {
-    return this.members;
+    if (!member) throw new NotFoundException('Member not found');
+    return member;
   }
 
-  addMember(dto: CreateMemberDto) {
-  const member: Member = {
-    id: this.nextId++,
-    name: dto.name,
-    email: dto.email,
-    role: 'member', 
-  };
-
-  this.members.push(member);
-  return member;
-}
-  updateMember(id: number, dto: UpdateMemberDto) {
-    const index = this.members.findIndex((m) => m.id === id);
-    if (index === -1) throw new NotFoundException('Member not found');
-
-    this.members[index] = { ...this.members[index], ...dto };
-    return this.members[index];
+  async getAllMembers() {
+    return await this.prisma.member.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
   }
 
-  deleteMember(id: number) {
-    const index = this.members.findIndex((m) => m.id === id);
-    if (index === -1) throw new NotFoundException('Member not found');
-
-    const deleted = this.members[index];
-    this.members.splice(index, 1);
-    return deleted;
+  async addMember(dto: CreateMemberDto) {
+    return await this.prisma.member.create({
+      data: {
+        name: dto.name,
+        email: dto.email,
+        role: 'member',
+      },
+    });
   }
 
-  updateRole(id: number, role: 'member' | 'librarian') {
-  const member = this.members.find(m => m.id === id);
-  if (!member) throw new NotFoundException('Member not found');
+  async updateMember(id: number, dto: UpdateMemberDto) {
+    try {
+      return await this.prisma.member.update({
+        where: { id },
+        data: dto,
+      });
+    } catch {
+      throw new NotFoundException('Member not found');
+    }
+  }
 
-  member.role = role;
-  return member;
-}
+  async deleteMember(id: number) {
+    try {
+      return await this.prisma.member.delete({
+        where: { id },
+      });
+    } catch {
+      throw new NotFoundException('Member not found');
+    }
+  }
 
+  async updateRole(id: number, role: 'member' | 'librarian') {
+    try {
+      return await this.prisma.member.update({
+        where: { id },
+        data: { role },
+      });
+    } catch {
+      throw new NotFoundException('Member not found');
+    }
+  }
 }

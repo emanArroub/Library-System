@@ -18,29 +18,30 @@ import { Roles } from '../common/decorators/roles.decorator.js';
 @Controller('books')
 export class BooksController {
   constructor(private readonly bookService: BooksService) {}
+
   @Get()
-  getAllBooks() {
-    return this.bookService.getAllBooks();
+  async getAllBooks() {
+    return await this.bookService.getAllBooks();
   }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles('librarian')
   @Post()
-  addBook(@Body() dto: CreateBookDto) {
-    return this.bookService.addBook(dto);
+  async addBook(@Body() dto: CreateBookDto) {
+    return await this.bookService.addBook(dto);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles('librarian')
   @Put(':id')
-  updateBook(@Param('id') id: number, @Body() dto: UpdateBookDto) {
-    return this.bookService.updateBook(id, dto);
+  async updateBook(@Param('id') id: number, @Body() dto: UpdateBookDto) {
+    return await this.bookService.updateBook(id, dto);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles('librarian')
   @Delete(':id')
-  deleteBook(@Param('id') id: number) {
-    return this.bookService.deleteBook(id);
+  async deleteBook(@Param('id') id: number) {
+    return await this.bookService.deleteBook(id);
   }
 }

@@ -5,6 +5,8 @@ import {
   Param,
   Body,
   UseGuards,
+  Req,
+  Get
 } from '@nestjs/common';
 import { BorrowService } from './borrow.service.js';
 import { CreateBorrowDto } from './dto/create-borrow.dto.js';
@@ -18,17 +20,22 @@ import type { Member } from '../common/interfaces/member.interface.js';
 export class BorrowController {
   constructor(private readonly borrowService: BorrowService) {}
 
+   @Get()
+    async getAllBorrows() {
+      return await this.borrowService.getAllBorrows();
+    }
+
   @UseGuards(AuthGuard, RolesGuard)
   @Roles('member')
   @Post()
-  borrowBook(@CurrentUser() user: Member, @Body() dto: CreateBorrowDto) {
-    return this.borrowService.borrowBook(user.id, dto.bookId);
+  async borrowBook(@Body() dto: CreateBorrowDto, @Req() req) {
+    return await this.borrowService.borrowBook(req.user.id, dto);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles('member')
   @Patch(':id/return')
-  returnBook(@CurrentUser() user: Member, @Param('id') id: number) {
-    return this.borrowService.returnBook(user.id, id);
+  async returnBook(@CurrentUser() user: Member, @Param('id') id: number) {
+    return await this.borrowService.returnBook(user.id, id);
   }
 }

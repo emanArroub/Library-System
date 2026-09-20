@@ -4,59 +4,105 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Borrow } from '../common/interfaces/borrow.interface.js';
-import { BooksService } from '../books/books.service.js';
-import { MembersService } from '../members/members.service.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { CreateBorrowDto } from './dto/create-borrow.dto.js';
 
 @Injectable()
 export class BorrowService {
-  private borrowed: Borrow[] = [];
-  private nextId = 1;
+  constructor(private prisma: PrismaService) {}
 
-  constructor(
-    private readonly booksService: BooksService,
-    private readonly membersService: MembersService,
-  ) {}
+async borrowBook(memberId: number, dto: CreateBorrowDto) {
+  const { bookId } = dto;
 
-  borrowBook(memberId: number, bookId: number) {
-    const member = this.membersService.getMemberById(memberId);
-    if (!member) throw new NotFoundException('Member not found');
+  const book = await this.prisma.book.findUnique({
+    where: { id: bookId },
+  });
 
-    const book = this.booksService.getBookById(bookId);
-    if (!book) throw new NotFoundException('Book not found');
-
-    if (book.availableCopies <= 0)
-      throw new BadRequestException('No available copies');
-
-    book.availableCopies -= 1;
-
-    const borrow: Borrow = {
-      id: this.nextId++,
-      memberId,
-      bookId,
-      borrowDate: new Date(),
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      returned: false,
-    };
-
-    this.borrowed.push(borrow);
-    return borrow;
+  if (!book) {
+    throw new BadRequestException('Book not found');
   }
 
-  returnBook(memberId: number, borrowId: number) {
-    const borrow = this.borrowed.find((b) => b.id === borrowId);
+  if (book.availableCopies <= 0) {
+    throw new BadRequestException('No copies available');
+  }
+
+  const existingBorrow = await this.prisma.borrow.findFirst({
+    where: {
+      memberId,
+      bookId,
+      returned: false,
+    },
+  });
+
+  if (existingBorrow) {
+    throw new BadRequestException('You already borrowed this book');
+  }
+
+  const borrowDate = new Date();
+  const dueDate = new Date();
+  dueDate.setDate(borrowDate.getDate() + 7);
+
+  const borrow = await this.prisma.borrow.create({
+    data: {
+      memberId,
+      bookId,
+      borrowDate,
+      dueDate,
+    },
+  });
+
+  await this.prisma.book.update({
+    where: { id: bookId },
+    data: {
+      availableCopies: book.availableCopies - 1,
+    },
+  });
+
+  return borrow;
+}
+
+  async returnBook(memberId: number, borrowId: number) {
+    const borrow = await this.prisma.borrow.findUnique({
+      where: { id: borrowId },
+    });
 
     if (!borrow) throw new NotFoundException('Borrow not found');
 
-    if (borrow.memberId !== memberId)
+    if (borrow.memberId !== memberId) {
       throw new ForbiddenException('This borrow does not belong to you');
+    }
 
-    borrow.returned = true;
+    if (borrow.returned) {
+      throw new BadRequestException('Book already returned');
+    }
 
-    const book = this.booksService.getBookById(borrow.bookId);
-    if (!book) throw new NotFoundException('Book not found');
-    book.availableCopies += 1;
+    await this.prisma.book.update({
+      where: { id: borrow.bookId },
+      data: {
+        availableCopies: { increment: 1 },
+      },
+    });
 
-    return borrow;
+    const now = new Date();
+    const isLate = now > borrow.dueDate;
+    const fine = isLate ? 5 : 0;
+
+    return await this.prisma.borrow.update({
+      where: { id: borrowId },
+      data: {
+        returned: true,
+        returnDate: now,
+        fine,
+      },
+    });
+  }
+
+  async getAllBorrows() {
+    return await this.prisma.borrow.findMany({
+      include: {
+        member: true,
+        book: true,
+      },
+    });
   }
 }
