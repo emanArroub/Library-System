@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateMemberDto } from './dto/create-member.dto.js';
 import { UpdateMemberDto } from './dto/update-member.dto.js';
-import { PrismaModule } from '../prisma/prisma.module.js';
 
 @Injectable()
 export class MembersService {
@@ -59,7 +58,7 @@ export class MembersService {
     }
   }
 
-  async updateRole(id: number, role: 'member' | 'librarian') {
+  async updateRole(id: number, role: string) {
     try {
       return await this.prisma.member.update({
         where: { id },

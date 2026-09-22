@@ -5,6 +5,7 @@ import { UpdateMemberDto } from './dto/update-member.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { AuthGuard} from '../common/guards/auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
+import { UpdateRoleDto } from './dto/update-role.dto.js';
 
 @UseGuards(AuthGuard)
 @Controller('members')
@@ -43,8 +44,8 @@ deleteMember(@Param('id') id: number) {
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('librarian')
 @Patch(':id/role')
-updateRole(@Param('id') id: number, @Body('role') role: 'member' | 'librarian') {
-  return this.membersService.updateRole(id, role);
+updateRole(@Param('id') id: number, @Body() dto:UpdateRoleDto) {
+  return this.membersService.updateRole(id, dto.role);
 }
 
 }

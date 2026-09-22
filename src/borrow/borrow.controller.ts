@@ -14,7 +14,7 @@ import { AuthGuard } from '../common/guards/auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-role.decorator.js';
-import type { Member } from '../common/interfaces/member.interface.js';
+import type { Member } from '../generated/prisma/client.js';
 
 @Controller('borrow')
 export class BorrowController {
