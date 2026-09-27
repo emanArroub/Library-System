@@ -5,60 +5,41 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { CreateBorrowDto } from './dto/create-borrow.dto.js';
 
 @Injectable()
 export class BorrowService {
   constructor(private prisma: PrismaService) {}
 
-async borrowBook(memberId: number, dto: CreateBorrowDto) {
-  const { bookId } = dto;
+async borrowBook(memberId: number, bookId: number) {
+  return this.prisma.$transaction(async (tx) => {
+    const book = await tx.book.findUnique({ where: { id: bookId } });
 
-  const book = await this.prisma.book.findUnique({
-    where: { id: bookId },
+    if (!book) throw new BadRequestException('Book not found');
+    if (book.availableCopies < 1)
+      throw new BadRequestException('No copies available');
+
+    const existingBorrow = await tx.borrow.findFirst({
+      where: { memberId, bookId, returned: false },
+    });
+
+    if (existingBorrow)
+      throw new BadRequestException('You already borrowed this book');
+
+    const borrow = await tx.borrow.create({
+      data: {
+        memberId,
+        bookId,
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    await tx.book.update({
+      where: { id: bookId },
+      data: { availableCopies: book.availableCopies - 1 },
+    });
+
+    return borrow;
   });
-
-  if (!book) {
-    throw new BadRequestException('Book not found');
-  }
-
-  if (book.availableCopies <= 0) {
-    throw new BadRequestException('No copies available');
-  }
-
-  const existingBorrow = await this.prisma.borrow.findFirst({
-    where: {
-      memberId,
-      bookId,
-      returned: false,
-    },
-  });
-
-  if (existingBorrow) {
-    throw new BadRequestException('You already borrowed this book');
-  }
-
-  const borrowDate = new Date();
-  const dueDate = new Date();
-  dueDate.setDate(borrowDate.getDate() + 7);
-
-  const borrow = await this.prisma.borrow.create({
-    data: {
-      memberId,
-      bookId,
-      borrowDate,
-      dueDate,
-    },
-  });
-
-  await this.prisma.book.update({
-    where: { id: bookId },
-    data: {
-      availableCopies: book.availableCopies - 1,
-    },
-  });
-
-  return borrow;
 }
 
   async returnBook(memberId: number, borrowId: number) {

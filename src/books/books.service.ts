@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateBookDto } from './dto/create-book.dto.js';
 import { UpdateBookDto } from './dto/update-book.dto.js';
@@ -56,13 +56,20 @@ export class BooksService {
     return updated;
   }
 
-  async deleteBook(id: number) {
-    try {
-      return await this.prisma.book.delete({
-        where: { id },
-      });
-    } catch {
+async deleteBook(id: number) {
+  try {
+    return await this.prisma.book.delete({ where: { id } });
+  } catch (error) {
+    if (error.code === 'P2003') {
+      throw new BadRequestException(
+        'Cannot delete this book because it has active borrow records',
+      );
+    }
+
+    if (error.code === 'P2025') {
       throw new NotFoundException('Book not found');
     }
+    throw error;
   }
+}
 }

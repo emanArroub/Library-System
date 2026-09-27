@@ -20,7 +20,10 @@ import type { Member } from '../generated/prisma/client.js';
 export class BorrowController {
   constructor(private readonly borrowService: BorrowService) {}
 
-   @Get()
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('librarian')
+  @Get()
     async getAllBorrows() {
       return await this.borrowService.getAllBorrows();
     }
@@ -29,7 +32,7 @@ export class BorrowController {
   @Roles('member')
   @Post()
   async borrowBook(@Body() dto: CreateBorrowDto, @Req() req) {
-    return await this.borrowService.borrowBook(req.user.id, dto);
+    return await this.borrowService.borrowBook(req.user.id , dto.bookId);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
