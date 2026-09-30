@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import 'dotenv/config';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -27,9 +28,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         data: {
           name: 'Admin',
           email: adminEmail,
+          password: await bcrypt.hash('admin123', 10),
           role: 'librarian',
         },
-      });
+        });
 
       console.log('✔️ Admin user created automatically');
     }

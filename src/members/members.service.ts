@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateMemberDto } from './dto/create-member.dto.js';
 import { UpdateMemberDto } from './dto/update-member.dto.js';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class MembersService {
@@ -16,6 +17,12 @@ export class MembersService {
     return member;
   }
 
+  async getMemberByEmail(email: string) {
+    return await this.prisma.member.findUnique({
+      where: { email },
+    });
+  }
+
   async getAllMembers() {
     return await this.prisma.member.findMany({
       select: {
@@ -28,10 +35,12 @@ export class MembersService {
   }
 
   async addMember(dto: CreateMemberDto) {
+    const hashedPassword = await bcrypt.hash(dto.password,10)
     return await this.prisma.member.create({
       data: {
         name: dto.name,
         email: dto.email,
+        password: hashedPassword,
         role: 'member',
       },
     });

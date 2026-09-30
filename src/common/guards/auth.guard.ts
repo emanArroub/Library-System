@@ -2,30 +2,43 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { MembersService } from '../../members/members.service.js';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly membersService: MembersService) {}
+constructor(
+  private readonly membersService: MembersService,
+  private readonly jwtService: JwtService,
+) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+  const request = context.switchToHttp().getRequest();
 
-    const memberId = Number(request.headers['x-member-id']);
-    if (!memberId) {
-      throw new ForbiddenException('Missing member ID');
-    }
+  const authHeader = request.headers.authorization;
 
-    const member = await this.membersService.getMemberById(memberId);
+  if (!authHeader) {
+    throw new UnauthorizedException('Missing authorization token');
+  }
 
-    if (!member) {
-      throw new ForbiddenException('Invalid member ID');
-    }
+  const [type, token] = authHeader.split(' ');
+
+  if (type !== 'Bearer' || !token) {
+    throw new UnauthorizedException('Invalid authorization format');
+  }
+
+  try {
+    const payload = await this.jwtService.verifyAsync(token);
+
+    const member = await this.membersService.getMemberById(payload.sub);
 
     request.user = member;
 
     return true;
+  } catch {
+    throw new UnauthorizedException('Invalid or expired token');
   }
+}
 }
